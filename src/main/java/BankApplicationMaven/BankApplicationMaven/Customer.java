@@ -54,6 +54,8 @@ public class Customer extends Person{
 		}
 		System.out.println("Transfer Approved!");
 		accountList.get(availableAccount).withdrawing(amount);
+		System.out.println("New Balance From Account:  " + accountList.get(availableAccount).currentAmount);
+		System.out.println("New Balance To Account:  " + accountList.get(account).currentAmount);
 		return accountList;
 	}
 	

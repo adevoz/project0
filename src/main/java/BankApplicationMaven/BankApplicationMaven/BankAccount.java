@@ -27,6 +27,20 @@ public class BankAccount implements Serializable{
 		this.accountNumber = tempAccountNumber;
 	}
 	
+	public BankAccount(int accountNum, int ammount, String accountType, ArrayList<String> joinList) {
+		super();
+		if(accountType.equals("N")){
+			this.accountType = AccountType.SINGLE;
+		}
+		else if(accountType.equals("Y")) {
+			this.accountType = AccountType.JOINT;
+		}
+		this.currentAmount = ammount;
+		this.allowedUsers = new ArrayList<String>();
+		this.allowedUsers.addAll(joinList);
+		this.accountNumber = accountNum;
+	}
+	
 //	public BankAccount(AccountType accountType, String user) {
 //		super();
 //		this.currentAmount = 0;

@@ -6,18 +6,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import org.apache.log4j.Logger;
-
-
+import BankApplicationMaven.SQL.ConnectionFactory;
+import BankApplicationMaven.SQL.DAO;
+import BankApplicationMaven.SQL.DAOimplentation;
 
 public class Main {
-	final static Logger Logger = org.apache.log4j.Logger.getLogger(Main.class);
+	final static DAOimplentation customerDAO = new DAOimplentation();
+	//final static //Logger //Logger = org.apache.log4j.//Logger.getLogger("BankLogger");
 	public static void main(String[] args) throws ClassNotFoundException {
 		// TODO Auto-generated method stub
-		
+		//BasicConfigurator.configure();
 		ArrayList<Employee> EmployeeList = new ArrayList<Employee>();
 		ArrayList<Customer> CustomerList = new ArrayList<Customer>();
 		ArrayList<BankAccount> AccountList = new ArrayList<BankAccount>();
@@ -25,91 +29,6 @@ public class Main {
  		// reading current text files for objects in database
 		boolean mainSystem = true;
 		while (mainSystem) {
-		try {
-			FileInputStream fi = new FileInputStream("myCustomers.txt");
-			ObjectInputStream oi = new ObjectInputStream(fi);
-			boolean cont = true;
-			while (cont) {
-				System.out.println("Reading Input");
-				if (fi.available() != 0) {
-					CustomerList = (ArrayList<Customer>) oi.readObject();
-					System.out.println("Customer Added");
-
-				}
-				else {
-					cont = false;
-					oi.close();
-					fi.close();
-				}
-			}
-		}
-		catch (FileNotFoundException e) {
-			System.out.println("File not found");
-		} catch (IOException e) {
-			System.out.println("Finished Input");
-		}
-		
-		try {
-			FileInputStream fi = new FileInputStream("myEmployees.txt");
-			ObjectInputStream oi = new ObjectInputStream(fi);
-			boolean cont = true;
-			while (cont) {
-				if (fi.available() != 0)
-					EmployeeList = (ArrayList<Employee>) oi.readObject();
-				else {
-					cont = false;
-					oi.close();
-					fi.close();
-				}
-			}
-		}
-		catch (FileNotFoundException e) {
-			System.out.println("File not found");
-		} catch (IOException e) {
-			System.out.println("Finished Input");
-		}
-		
-		try {
-			FileInputStream fi = new FileInputStream("Accounts.txt");
-			ObjectInputStream oi = new ObjectInputStream(fi);
-			boolean cont = true;
-			while (cont) {
-				if (fi.available() != 0)
-					AccountList = (ArrayList<BankAccount>) oi.readObject();
-				else {
-					cont = false;
-					oi.close();
-					fi.close();
-				}
-			}
-		}
-		
-		catch (FileNotFoundException e) {
-			System.out.println("File not found");
-		} catch (IOException e) {
-			System.out.println("Finished Input");
-		}
-		try {
-			FileInputStream fi = new FileInputStream("myApplications.txt");
-			ObjectInputStream oi = new ObjectInputStream(fi);
-			boolean cont = true;
-			while (cont == true) {
-				if (fi.available() != 0)
-					ApplicationList = (ArrayList<Application>) oi.readObject();
-				else {
-					cont = false;
-					oi.close();
-					fi.close();
-				}
-			}
-		}
-		
-		catch (FileNotFoundException e) {
-			System.out.println("File not found");
-		} catch (IOException e) {
-			System.out.println("Finished Input");
-		}
-		
 		
 		String loginType = MainOptions(EmployeeList, CustomerList);
 		if (loginType == null) {
@@ -134,36 +53,27 @@ public class Main {
 			System.out.println("Checking for User");
 	
 			if (loginType.equals("Employee")) {
-				Employee currentLogin = null;
-				for(int i = 0; i < EmployeeList.size(); i++) {
-					if ((EmployeeList.get(i).getUsername().equals(Username)) &&
-							EmployeeList.get(i).getPassword().equals(Password)) {
-						currentLogin = EmployeeList.get(i);
-						employeeLogin = currentLogin;
-						system = false;
-					}	
+				Person tempPerson = customerDAO.checkLogin(Username, Password);
+				String adminStatus = customerDAO.checkEmployment(Username);
+				if (adminStatus.equals("Y"))
+				{
+					employeeLogin = new Employee(tempPerson.getfName(), tempPerson.getlName(), tempPerson.getUsername(), tempPerson.getPassword(), JobTitle.ADMIN);
+					break;
 				}
-				if (currentLogin == null) {
-					System.out.println("Username or Password Incorrect try again");
+				else
+				{
+					employeeLogin = new Employee(tempPerson.getfName(), tempPerson.getlName(), tempPerson.getUsername(), tempPerson.getPassword(), JobTitle.NORMAL);
+					break;
 				}
+				
 			}
 			
 			else if (loginType.equals("User")) {
-				Customer currentLogin = null;
-				for(int i = 0; i < CustomerList.size(); i++) {
-					if ((CustomerList.get(i).getUsername().equals(Username)) &&
-							CustomerList.get(i).getPassword().equals(Password)) {
-						currentLogin = CustomerList.get(i);
-						customerLogin = currentLogin;
-						system = false;
-					}	
-				}
-				if (currentLogin == null) {
-					System.out.println("Username or Password Incorrect try again");
-					System.exit(0);
-				}
+				Person currentLogin = customerDAO.checkLogin(Username, Password);
+				customerLogin = new Customer(currentLogin.getfName(), currentLogin.getlName(), currentLogin.getUsername(), currentLogin.getPassword());
+				break;
+			}
 		}
-	  }
 			system = true;
 			while(system) {
 			if (loginType.equals("Employee"))
@@ -198,19 +108,9 @@ public class Main {
 				break;
 		}
 		Employee newEmployee = new Employee(newEmployeeInfo[0], newEmployeeInfo[1], newEmployeeInfo[2], newEmployeeInfo[3], tempJobStatus);
-		EmployeeList.add(newEmployee);
-		try {
-			FileOutputStream f = new FileOutputStream("myEmployees.txt");
-			ObjectOutputStream o = new ObjectOutputStream(f);
-			o.writeObject(EmployeeList);
-			f.close();
-			o.close();
-		}
-		catch (FileNotFoundException e) {
-			System.out.println("File not found");
-		} catch (IOException e) {
-			System.out.println("Error initializing stream");
-		}
+		customerDAO.createEmployee(newEmployee, admin);
+		Logger newLog = new Logger(newEmployee.getUsername(), "Creating New Employee" , LocalDateTime.now());
+		customerDAO.createLogger(newLog);
 		return EmployeeList;
 	}
 	public static ArrayList<Application> inputApplication(ArrayList<Application> ApplicationList, Application newApplication) {
@@ -250,19 +150,9 @@ public class Main {
 		Scanner reader = new Scanner(System.in);
 		String[] newCustomerInfo = reader.nextLine().split(", ");
 		Customer newCustomer = new Customer(newCustomerInfo[0], newCustomerInfo[1], newCustomerInfo[2], newCustomerInfo[3]);
-		try {
-			FileOutputStream f = new FileOutputStream("myCustomers.txt");
-			ObjectOutputStream o = new ObjectOutputStream(f);
-			CustomerList.add(newCustomer);
-			o.writeObject(CustomerList);
-			f.close();
-			o.close();
-		}
-		catch (FileNotFoundException e) {
-			System.out.println("File not found");
-		} catch (IOException e) {
-			System.out.println("Error initializing stream");
-		}
+		Logger newLog = new Logger(newCustomer.getUsername(), "Customer Creation", LocalDateTime.now());
+		customerDAO.createLogger(newLog);
+		customerDAO.createCustomer(newCustomer);
 		return CustomerList;
 	}
 	public static void refreshDatabase(ArrayList<Employee> EmployeeList,
@@ -332,56 +222,82 @@ public class Main {
 		System.out.println("5: Create Account");
 		System.out.println("0: Return to Main Menu");
 		Scanner reader = new Scanner(System.in);
-		int availableAccount = -1;
-		for (int i = 0; i < AccountList.size(); i++) {
-			if (AccountList.get(i).getAllowedUsers().contains(Username)) {
-				availableAccount = i;
-			}
-		}
+		BankAccount customerAccount = null;
+		customerAccount = customerDAO.grabAccount(customerLogin.getUsername());
 		String currentchoice = reader.next();
 		switch (currentchoice) {
 			case "1":
-				if (availableAccount < 0) {
+				if (customerAccount == null) {
 					System.out.println("No Account Available");
 					break;
 				}
-				System.out.println("Current Balance: " + AccountList.get(availableAccount).getCurrentAmmount());
+				System.out.println(customerLogin.getfName() + customerLogin.getlName());
+				System.out.println("Current Balance: " + customerAccount.getCurrentAmmount());
+				Logger newLog = new Logger(customerLogin.getUsername(), "Check Balance", LocalDateTime.now());
+				customerDAO.createLogger(newLog);
 				break;
 			case "2":
-				if (availableAccount < 0) {
+				if (customerAccount == null) {
 					System.out.println("No Account Available");
 					break;
 				}
 				System.out.println("Please Enter Amount to Deposit: ");
 				Double deposit = reader.nextDouble();
-				if (AccountList.get(availableAccount).depositing(deposit)) {
-					System.out.print("Request Processed");
+				boolean approval = customerAccount.depositing(deposit);
+				if (approval) {
+					System.out.println("Request Processed");
+					customerDAO.updateAccount(customerAccount);
 				}
 				else
-					System.out.print("Invalid Input");
+					System.out.println("Invalid Input");
+				
+				System.out.println("New Balance: " + customerAccount.getCurrentAmmount());
+				Logger newLog1 = new Logger(customerLogin.getUsername(), "Deposit" , LocalDateTime.now());
+				customerDAO.createLogger(newLog1);
 				break;
 			case "3":
-				if (availableAccount < 0) {
+				if (customerAccount == null) {
 					System.out.println("No Account Available");
 					break;
 				}
-				System.out.print("Please Enter Amount to Transfer ");
+				System.out.println("Please Enter Amount to Transfer ");
 				Double transferAmount = reader.nextDouble();
-				AccountList = customerLogin.Transferto(AccountList, availableAccount, transferAmount);
+				System.out.println("Please Enter Account Number to Tranfer");
+				int accountTransferTo = reader.nextInt();
+				BankAccount tempAccountTransfer = customerDAO.grabAccountwithNumber(accountTransferTo);
+				if (tempAccountTransfer == null)
+				{
+					System.out.println("Invalid Account Number");
+					break;
+				}
+				boolean checkDeposit = customerAccount.withdrawing(transferAmount);
+				boolean checkWithdraw = tempAccountTransfer.depositing(transferAmount);
+				if (checkDeposit && checkWithdraw) {
+					customerDAO.updateAccount(tempAccountTransfer);
+					customerDAO.updateAccount(customerAccount);
+					System.out.println("Transfer Processed!");
+				}
+				Logger newLog2 = new Logger(customerLogin.getUsername(), "Transfer", LocalDateTime.now());
+				customerDAO.createLogger(newLog2);
 				break;
 			case "4":
-				if (availableAccount < 0) {
+				if (customerAccount == null) {
 					System.out.println("No Account Available");
 					break;
 				}
 				System.out.println("Please Enter Amount to Withdraw: ");
 				Double withdraw = reader.nextDouble();
-				AccountList.get(availableAccount).withdrawing(withdraw);
-				if (AccountList.get(availableAccount).withdrawing(withdraw)) {
-					System.out.print("Request Processed");
+				boolean withdrawApproval = customerAccount.withdrawing(withdraw);
+				if (withdrawApproval) {
+					System.out.println("Request Processed");
+					customerDAO.updateAccount(customerAccount);
 				}
 				else
-					System.out.print("Invalid Input");
+					System.out.println("Invalid Input");
+				//Logger.info("Transfer Request by" + customerLogin.getfName() + withdrawApproval); 
+				System.out.println("New Balance: " + customerAccount.getCurrentAmmount());
+				Logger newLog3 = new Logger(customerLogin.getUsername(), "Withdraw", LocalDateTime.now());
+				customerDAO.createLogger(newLog3);
 				break;
 			case "5":
 				System.out.println("Enter type of Account Type: single/joint");
@@ -389,21 +305,27 @@ public class Main {
 				ArrayList<String> usernames = new ArrayList<String>();
 				usernames.add(Username);
 				Application newApplication = null;
+				Logger newLog9 = new Logger(customerLogin.getUsername(), "Application Created",  LocalDateTime.now());
+				customerDAO.createLogger(newLog9);
 				if (currentChoice.equals("joint")) {
 					System.out.println("Enter other user");
 					String secondUser = reader.next();
 					usernames.add(secondUser);
-					newApplication = new Application(Applicationtype.JOINT, usernames);
-					ApplicationList = inputApplication(ApplicationList, newApplication);
+					customerDAO.createApplication(usernames);
+					System.out.println("Application in PENDING");
+					break;
 				}
-				else {
-					newApplication = new Application(Applicationtype.SINGLE, usernames);
-					ApplicationList = inputApplication(ApplicationList, newApplication);
+				else if(currentChoice.equals("single")) {
+					customerDAO.createApplication(usernames);
+					System.out.println("Application in PENDING");
+					break;
 				}
-				System.out.println("Application in PENDING");
+				System.out.print("Application not sent INVALID INPUT!");
+				//Logger.info("Application Request by" + customerLogin.getfName()); 
 				break;
 			case "0":
 				refreshDatabase(EmployeeList,CustomerList, AccountList, ApplicationList);
+				//Logger.info("System Database refresh");
 				return false;
 		}
 		refreshDatabase(EmployeeList,CustomerList, AccountList, ApplicationList);
@@ -420,13 +342,25 @@ public class Main {
 		case "1":
 			System.out.println("Enter Account Number: ");
 			long accountNumber = reader.nextLong();
-			employeeLogin.viewAccountBalance(AccountList, accountNumber);
+			BankAccount tempBankAccount = customerDAO.grabAccountwithNumber((int) accountNumber);
+			if (tempBankAccount == null)
+			{
+				System.out.println("Invalid Account Number!");
+				break;
+			}
+			employeeLogin.viewAccountBalance(tempBankAccount);
+			Logger newLog = new Logger(employeeLogin.getUsername(), "View Account", LocalDateTime.now());
+			customerDAO.createLogger(newLog);
 			break;
 		case "2":
 			System.out.println("Enter Username: ");
 			String personToFind = reader.next();
 			employeeLogin.viewPersonalInfo(CustomerList, personToFind);
+			Logger newLog3 = new Logger(employeeLogin.getUsername(), "View User", LocalDateTime.now());
+			customerDAO.createLogger(newLog3);
+			break;
 		case "3":
+			ApplicationList = customerDAO.readApplications();
 			for (int i = 0; i < ApplicationList.size() ; i++) {
 				if (ApplicationList.get(i).getApplicationStatus() == Status.PENDING) {
 					ApplicationList.get(i).printInfo();
@@ -436,13 +370,22 @@ public class Main {
 						System.out.println("Application Approved opening Account");
 						ApplicationList.get(i).setApplicationStatus(Status.APPROVED);
 						if (ApplicationList.get(i).getApplicationType() == (Applicationtype.JOINT)) {
-							BankAccount tempBank = new BankAccount (AccountType.JOINT, ApplicationList.get(i).getUserList());
-							AccountList = inputBank(AccountList, tempBank);
+							customerDAO.updateApplication((int) ApplicationList.get(i).getApplicationNumber(), "Y");
+							customerDAO.createBankAccount(ApplicationList.get(i).getUserList());
+							Logger newLog4 = new Logger(employeeLogin.getUsername(), "Application Approved", LocalDateTime.now());
+							customerDAO.createLogger(newLog4);
 						}
 						else if (ApplicationList.get(i).getApplicationType() == (Applicationtype.SINGLE)){
-							BankAccount tempBank = new BankAccount (AccountType.SINGLE, ApplicationList.get(i).getUserList());
-							AccountList = inputBank(AccountList, tempBank);
+							customerDAO.updateApplication((int) ApplicationList.get(i).getApplicationNumber(), "Y");
+							customerDAO.createBankAccount(ApplicationList.get(i).getUserList());
+							//Logger.info("Employee approved single account");
 						}
+					}
+					else if(currentchoice.equals("N")) {
+						System.out.println("Application Decline!");
+						customerDAO.updateApplication((int) ApplicationList.get(i).getApplicationNumber(), "N");
+						ApplicationList.get(i).setApplicationStatus(Status.DECLINED);
+						//Logger.info("Employee" + employeeLogin.getfName() + "declined single account");
 					}
 					else 
 						System.out.println("Still in PENDING status");
@@ -453,32 +396,73 @@ public class Main {
 			break;
 		case "4":
 			System.out.println("Enter Account Number");
-			long accountNumberDeposit = reader.nextLong();
+			long accountNumberWithdraw = reader.nextLong();
 			System.out.println("Enter Amount");
 			double amount = reader.nextDouble();
-			AccountList = employeeLogin.withdraw(AccountList, accountNumberDeposit, amount);
+			BankAccount tempBankAccountWithdraw = customerDAO.grabAccountwithNumber((int) accountNumberWithdraw);
+			if (tempBankAccountWithdraw == null)
+			{
+				System.out.println("Invalid Account Number!");
+				break;
+			}
+			BankAccount update = employeeLogin.withdraw(tempBankAccountWithdraw, amount);
+			customerDAO.updateAccount(update);
+			Logger newLog5 = new Logger(employeeLogin.getUsername(), "Employee Withdraw", LocalDateTime.now());
+			customerDAO.createLogger(newLog5);
 			break;
 		case "5":
 			System.out.println("Enter Account Number");
-			long accountNumberWithdraw = reader.nextLong();
+			long accountNumberDeposit = reader.nextLong();
 			System.out.println("Enter Amount");
 			double amountToDeposit = reader.nextDouble();
-			AccountList = employeeLogin.deposit(AccountList, accountNumberWithdraw, amountToDeposit);
+			BankAccount tempBankAccountDeposit = customerDAO.grabAccountwithNumber((int) accountNumberDeposit);
+			if (tempBankAccountDeposit == null)
+			{
+				System.out.println("Invalid Account Number!");
+				break;
+			}
+			BankAccount updateDeposit = employeeLogin.deposit(tempBankAccountDeposit, amountToDeposit);
+			customerDAO.updateAccount(updateDeposit);
+			Logger newLog6 = new Logger(employeeLogin.getUsername(), "Empoloyee Deposit", LocalDateTime.now());
+			customerDAO.createLogger(newLog6);
 			break;
 		case "6":
 			System.out.println("Enter Account Number from: ");
 			long fromAccountNumber = reader.nextLong(); 
 			System.out.println("Enter Amount to Transfer");
 			int amountToTransfer = reader.nextInt();
-			AccountList = employeeLogin.Transferto(AccountList, fromAccountNumber, amountToTransfer);
+			System.out.println("Enter Account Number to: ");
+			long toAccountNumber = reader.nextLong();
+			BankAccount tempBankAccountTransferFrom = customerDAO.grabAccountwithNumber((int) fromAccountNumber);
+			BankAccount tempBankAccountTransferTo = customerDAO.grabAccountwithNumber((int) toAccountNumber);
+			if (tempBankAccountTransferFrom == null || tempBankAccountTransferTo == null)
+			{
+				System.out.println("Invalid Accounts!");
+				break;
+			}
+			boolean checkDeposit = tempBankAccountTransferFrom.withdrawing(amountToTransfer);
+			boolean checkWithdraw = tempBankAccountTransferTo.depositing(amountToTransfer);
+			if (checkDeposit && checkWithdraw)
+			{
+				System.out.println("Transfer Succes");
+				customerDAO.updateAccount(tempBankAccountTransferFrom);
+				customerDAO.updateAccount(tempBankAccountTransferTo);
+			}
+			else {
+				System.out.println("Withdraw/Deposit Failure!");
+			}
+			Logger newLog10 = new Logger(employeeLogin.getUsername(), "Employee Transfer", LocalDateTime.now());
+			customerDAO.createLogger(newLog10);
 			break;
 		case "7":
 			System.out.println("Enter Account Number to Delete: ");
 			long accountDelete = reader.nextLong();
 			AccountList = employeeLogin.delete(AccountList, accountDelete);
+			//Logger.info("Employee" + employeeLogin.getfName() + "Deleted Account");
 			break;
 		case"0":
 			refreshDatabase(EmployeeList,CustomerList, AccountList, ApplicationList);
+			//Logger.info("System Refresh");
 			return false;
 		}
 		refreshDatabase(EmployeeList,CustomerList, AccountList, ApplicationList);
@@ -486,8 +470,9 @@ public class Main {
 	  }
 	public static String MainOptions(ArrayList<Employee> EmployeeList, ArrayList<Customer> CustomerList) {
 		Scanner reader = new Scanner(System.in);
+		System.out.println("Revature Banking Systems Main Menu");
 		System.out.println("1: User Login");
-		System.out.println("2: Employe Login");
+		System.out.println("2: Employee Login");
 		System.out.println("3: New Customer");
 		System.out.println("4: New Employee");
 		System.out.println("0: System Exit");

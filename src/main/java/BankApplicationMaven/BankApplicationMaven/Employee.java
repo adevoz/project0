@@ -19,11 +19,11 @@ public class Employee extends Person {
 	// Method to view Balances
 	// input: accountNumber
 	// output: String of balance
-	public String viewBalances(long accountNumber, ArrayList<BankAccount> Accounts){
+/*	public String viewBalances(long accountNumber, ArrayList<BankAccount> Accounts){
 		
 		return null;
-	}
-	
+	}*/
+
 	public JobTitle getJobStatus() {
 		return jobStatus;
 	}
@@ -41,68 +41,52 @@ public class Employee extends Person {
 	
 	public void printOptions() {
 		System.out.println("Current Options:");
-		System.out.println("1: view Balances");
-		System.out.println("2: view Personal");
-		System.out.println("3: view Pending Application");
+		System.out.println("1: View Balance");
+		System.out.println("2: View Personal");
+		System.out.println("3: View Pending Application");
 		if (this.jobStatus.equals((JobTitle.ADMIN))) {
-			System.out.println("4: withdrawing");
-			System.out.println("5: depositing");
-			System.out.println("6: transferring from all accounts");
-			System.out.println("7: canceling accounts");
+			System.out.println("4: Withdraw");
+			System.out.println("5: Depositing");
+			System.out.println("6: Transfers");
+			System.out.println("7: Canceling accounts");
 		}
 		System.out.println("0: Return to Main Menu");
 	}
-	public void viewAccountBalance(ArrayList<BankAccount> bankAccounts, long AccountNumber) {
-		int accountIndex = -1;
-		for (int i = 0; i < bankAccounts.size(); i++) {
-			if (bankAccounts.get(i).getAccountNumber() == AccountNumber) {
-				accountIndex = i;
-			}
-		}
-		if (accountIndex < 0) {
+	public void viewAccountBalance(BankAccount account) {
+		
+		if (account == null) {
 			System.out.println("Account not Found!");
 			return;
 		}
-		System.out.println("Current Balance: " + bankAccounts.get(accountIndex).getCurrentAmmount());
+		System.out.println("Current Balance: " + account.getCurrentAmmount());
 	}
 	public void viewPersonalInfo(ArrayList<Customer> customerList, String userToFind) {
 		for (int i = 0; i < customerList.size(); i++) {
 			if (customerList.get(i).getUsername().equals(userToFind)){
-				System.out.println("Name:" + customerList.get(i).getfName() + customerList.get(i).getlName());
+				System.out.println("First Name:" + customerList.get(i).getfName());
+				System.out.println("Last Name" + customerList.get(i).getlName());
 			}
 		}
 	}
-	public ArrayList<BankAccount> withdraw(ArrayList<BankAccount> bankAccounts, long AccountNumber, double amount) {
-		int accountIndex = -1;
-		ArrayList<BankAccount> noChange = bankAccounts;
-		for (int i = 0; i < bankAccounts.size(); i++) {
-			if (bankAccounts.get(i).getAccountNumber() == AccountNumber) {
-				accountIndex = i;
-			}
-		}
-		if (accountIndex < 0) {
+	public BankAccount withdraw(BankAccount bankAccounts, double amount) {
+		BankAccount noChange = bankAccounts;
+		if (bankAccounts == null) {
 			System.out.println("Account not Found!");
 			return noChange;
 		}
-		bankAccounts.get(accountIndex).withdrawing(amount);
-		System.out.println("New Balance: " + bankAccounts.get(accountIndex).getCurrentAmmount());
+		bankAccounts.withdrawing(amount);
+		System.out.println("New Balance: " + bankAccounts.getCurrentAmmount());
 		return bankAccounts;
 	}
-	public ArrayList<BankAccount> deposit(ArrayList<BankAccount> bankAccounts, long AccountNumber, double amount) {
-		int accountIndex = -1;
-		ArrayList<BankAccount> noChange = bankAccounts;
-		for (int i = 0; i < bankAccounts.size(); i++) {
-			if (bankAccounts.get(i).getAccountNumber() == AccountNumber) {
-				accountIndex = i;
-			}
-		}
-		if (accountIndex < 0) {
+	public BankAccount deposit(BankAccount bankAccountTo, double amount) {
+		BankAccount noChange = bankAccountTo;
+		if (bankAccountTo == null) {
 			System.out.println("Account not Found!");
 			return noChange;
 		}
-		bankAccounts.get(accountIndex).depositing(amount);
-		System.out.println("New Balance: " + bankAccounts.get(accountIndex).getCurrentAmmount());
-		return bankAccounts;
+		bankAccountTo.depositing(amount);
+		System.out.println("New Balance: " + bankAccountTo.getCurrentAmmount());
+		return bankAccountTo;
 	}
 	public ArrayList<BankAccount> Transferto(ArrayList<BankAccount> accountList, long accountNumberFrom, double amount){
 		long accountNumberTo;
@@ -140,9 +124,9 @@ public class Employee extends Person {
 			return noChange;
 		}
 		System.out.println("New Balance: " + accountList.get(accountFromIndex).getCurrentAmmount() +
-							"Account Number" + accountList.get(accountFromIndex).getAccountNumber());
+							"Account Number " + accountList.get(accountFromIndex).getAccountNumber());
 		System.out.println("New Balance: " + accountList.get(accountToIndex).getCurrentAmmount() +
-							"Account Number" + accountList.get(accountToIndex).getAccountNumber());
+							"Account Number " + accountList.get(accountToIndex).getAccountNumber());
 		System.out.println("Transfer Approved!");
 		return accountList;
 	}

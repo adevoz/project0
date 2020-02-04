@@ -33,6 +33,20 @@ public class Application implements Serializable {
 		this.userList.addAll(users);
 	}
 	
+	public Application(ArrayList<String> users) {
+		super();
+		this.applicationNumber = Application.applicationCount;
+		applicationCount ++;
+		this.applicationStatus = Status.PENDING;
+		if (users.size()==1) {
+			this.applicationType = Applicationtype.SINGLE;
+		}
+		else {
+			this.applicationType = Applicationtype.JOINT;
+		}
+		this.userList.addAll(users);
+	}
+	
 	
 	public Applicationtype getApplicationType() {
 		return applicationType;
