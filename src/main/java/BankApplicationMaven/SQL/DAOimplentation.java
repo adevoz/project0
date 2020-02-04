@@ -17,7 +17,8 @@ import BankApplicationMaven.BankApplicationMaven.Person;
 public class DAOimplentation implements DAO{
 	private static Connection conn = ConnectionFactory
 			.getConnectionFactory().createConnection(); 
-	
+
+	// these statements might not work with all SQL languages double check
 	@Override
 	public void createCustomer(Customer fc) {
 

@@ -6,12 +6,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class Driver {
-	
+
+	//replace with your login information
 	private static String url = "jdbc:postgresql://postgres.cjk7zjrxbarc.us-east-2.rds.amazonaws.com:5432/postgres?";
 	
 	private static String user = "adevoz";
 	
-	private static String password = "1thatpure1";
+	private static String password = "myoldpassword";
 	
 	
 	
